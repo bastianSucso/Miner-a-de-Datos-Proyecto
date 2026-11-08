@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "kill-slop": {
+      "source": "imrangadzhiev/anti-slop",
+      "sourceType": "github",
+      "skillPath": "skills/kill-slop/SKILL.md",
+      "computedHash": "5f4cad29bc501159389b6bf922c20bfa3af60d4cc563b66c8a7689e45190abaf"
+    }
+  }
+}

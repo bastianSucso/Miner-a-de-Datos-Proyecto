@@ -1,0 +1,38 @@
+﻿,descripcion,tipo_final,origen
+ID_REGISTRO,"Número de fila del CSV, comenzando en 1; no identifica pacientes",int64,Derivada
+PERTENENCIA_ESTABLECIMIENTO_SALU,Tipo de pertenencia (Perteneciente o No perteneciente al SNSS),string,Fuente original
+SEXO,Código del sexo biologico del paciente ,string,Fuente original
+GRUPO_EDAD,Grupo de edad del paciente al momento de su ingreso,string,Fuente original
+ETNIA,Se identifica o no con una etnia,string,Fuente original
+GLOSA_PAIS_ORIGEN,Indica si es chileno o extranjero,string,Fuente original
+COMUNA_RESIDENCIA,Código comuna de residencia del paciente,string,Fuente original
+GLOSA_COMUNA_RESIDENCIA,Nombre de la comuna de residencia,string,Fuente original
+REGION_RESIDENCIA,Código región de residencia del paciente,string,Fuente original
+GLOSA_REGION_RESIDENCIA,Nombre de la región de residencia,string,Fuente original
+PREVISION,Código de previsión de salud del paciente al momento del ingreso,string,Fuente original
+GLOSA_PREVISION,Glosa previsión de salud del paciente al momento del ingreso,string,Fuente original
+ANO_EGRESO,Año del egreso,Int64,Fuente original
+DIAG1,Código CIE-10 del diagnostico principal,string,Fuente original
+DIAG2,Código CIE-10 de la causa externa,string,Fuente original
+DIAS_ESTADA,Días de estada total,Int64,Fuente original
+CONDICION_EGRESO,"Código de la condición al egreso del paciente  
+1=Vivo
+2=Fallecido",Int64,Fuente original
+ERROR,No definida en el diccionario entregado; significado pendiente de confirmar,Int64,Fuente original
+TIENE_ASTERISCO,El registro tenía al menos un marcador * en la fuente,bool[pyarrow],Derivada
+TIENE_TEXTO_DANADO,El registro tenía algún carácter de sustitución en la fuente,boolean,Derivada
+EN_GRUPO_REPETIDO,Los 17 campos originales coinciden con los de al menos otra fila,bool,Derivada
+DIAG2_VACIO_ORIGEN,La causa externa estaba vacía en el CSV original,bool[pyarrow],Derivada
+TEXTO_DANADO_PENDIENTE,Quedan caracteres de sustitución en las versiones corregidas de las glosas,boolean,Derivada
+GLOSA_COMUNA_RESIDENCIA_CORREGIDA,Nombre de comuna según CUT de la capa DPA 2023 de la SMA; conserva origen si no hay correspondencia,string,Derivada
+ESTADO_CORRECCION_COMUNA,"CORREGIDA, NORMALIZADA, COINCIDE, CATEGORIA_ESPECIAL, SIN_DATO o SIN_CORRESPONDENCIA",string,Derivada
+GLOSA_REGION_RESIDENCIA_CORREGIDA,Nombre de región según CUT de la capa DPA 2023 de la SMA; conserva origen si no hay correspondencia,string,Derivada
+ESTADO_CORRECCION_REGION,"CORREGIDA, NORMALIZADA, COINCIDE, CATEGORIA_ESPECIAL, SIN_DATO o SIN_CORRESPONDENCIA",string,Derivada
+DIAG1_CATEGORIA,Primeros tres caracteres del diagnóstico principal,string,Derivada
+DIAG1_DESCRIPCION,Descripción de subcategoría obtenida por coincidencia exacta,string,Derivada
+DIAG1_GLOSA_CATEGORIA,Descripción de categoría en el diccionario entregado,string,Derivada
+DIAG1_CAPITULO,Capítulo correspondiente a la categoría del diagnóstico principal,string,Derivada
+DIAG1_GLOSA_CAPITULO,Descripción del capítulo en el diccionario entregado,string,Derivada
+DIAG1_COINCIDENCIA,"Coincidencia exacta, solo categoría, sin coincidencia o sin dato",str,Derivada
+DIAG2_COINCIDENCIA,"Coincidencia exacta, sin coincidencia o sin dato en causa externa",str,Derivada
+ESTADIA_MAYOR_365,"Más de 365 días; marca operativa de revisión, sin exclusión",boolean,Derivada

@@ -1,0 +1,7 @@
+.venv/
+.ipynb_checkpoints/
+__pycache__/
+tmp/
+datos/originales/*
+!datos/originales/catalogo_geografico_dpa_2023.csv
+datos/procesados/

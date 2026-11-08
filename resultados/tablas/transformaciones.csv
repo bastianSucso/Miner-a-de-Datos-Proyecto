@@ -1,0 +1,9 @@
+﻿transformacion,motivo,celdas_afectadas,registros_afectados
+Retirar espacios externos,Evitar diferencias por formato,0,0
+Vacíos a ausentes,Representar ausencia sin inventar valores,1540934,1540934
+Asteriscos a ausentes,Mantener la falta de información y su marca de origen,1427532,118961
+Corregir etiquetas de edad,Recuperar dos intervalos identificables,63876,63876
+Uniformar códigos CIE-10,Usar mayúsculas y códigos sin puntos para el cruce,0,0
+Convertir tipos numéricos,Representar cantidades y códigos según el diccionario,6703095,1705514
+Crear glosa corregida de comuna,Cruce por código con DPA 2023; se conserva la glosa de origen,400569,400569
+Crear glosa corregida de region,Cruce por código con DPA 2023; se conserva la glosa de origen,923702,923702
