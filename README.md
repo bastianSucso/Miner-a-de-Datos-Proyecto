@@ -1,6 +1,6 @@
-# Preprocesamiento común de egresos hospitalarios 2025
+# Preprocesamiento común de egresos hospitalarios 2023–2025
 
-`01_preprocesamiento_egresos_2025.ipynb` explora y prepara una sola base para las tres líneas del equipo: clasificación, regresión lineal, clustering y reglas de asociación. Se reutiliza la exploración anterior y se retira la preparación específica de regresión.
+`01_preprocesamiento_egresos_2025.ipynb` aplica el mismo preprocesamiento a los egresos de 2023, 2024 y 2025. La base común sirve de punto de partida para clasificación, regresión lineal, clustering y reglas de asociación.
 
 ## Ejecutar
 
@@ -8,9 +8,9 @@ El entorno `.venv` no se incluye en GitHub. Cada integrante debe crearlo con Pyt
 
 Para trabajar en VS Code:
 
-1. Abrir esta carpeta y el notebook.
-2. Pulsar **Seleccionar kernel**, arriba a la derecha. Si hace falta, elegir **Seleccionar otro kernel > Entornos de Python** y seleccionar **.venv (Python 3.13.6)**.
-3. Pulsar **Ejecutar todo**, o ejecutar las celdas en orden.
+1. Colocar `EGRESOS_2023.zip`, `EGRESOS_2024.zip` y `EGRESOS_2025.zip` en `datos/originales/` y abrir el notebook.
+2. Pulsar **Seleccionar kernel** y elegir **.venv** en **Entornos de Python**.
+3. Pulsar **Ejecutar todo**. El notebook procesa los ZIP de 2023, 2024 y 2025 en orden y muestra la exploración de cada año.
 
 No es necesario activar el entorno desde PowerShell para ejecutar el notebook con ese kernel. Para recrear el entorno en otro equipo con Python 3.13 instalado:
 
@@ -19,31 +19,31 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-La versión del notebook publicada en GitHub no incluye salidas de ejecución guardadas, para evitar publicar vistas de registros hospitalarios. **Ejecutar todo** genera las salidas localmente usando el entorno seleccionado. Las tablas y figuras agregadas están disponibles en `resultados/`.
+El notebook escribe cada año en un único Parquet temporal. Una vez verificados el esquema y los 4.985.130 egresos distribuidos por año, reemplaza la base común. Si la ejecución se interrumpe o falla, la última base válida sigue disponible. Los informes anuales, los ZIP y el Parquet se guardan localmente y están excluidos de Git.
 
 ## Organización
 
-- `datos/originales/EGRESOS_2025.zip`: fuente intacta, con CSV y diccionario.
-- `datos/procesados/egresos_2025_base_comun.parquet`: única base procesada, compartida por todo el equipo.
-- `resultados/tablas/descripcion_variables.csv`: descripción y tipos de todos los atributos finales.
-- `resultados/tablas/calidad_datos.csv`: marcadores originales, ausentes finales y cambios por variable.
-- `resultados/tablas/transformaciones.csv`: motivo y cantidad de celdas y filas afectadas por cada transformación.
-- `resultados/tablas/diagnosticos_sin_coincidencia_exacta.csv`: códigos pendientes de revisión.
-- `resultados/tablas/resumen_procesamiento.csv`: conteos y verificación de conservación de datos.
-- `resultados/figuras/`: tres gráficos descriptivos. Las restantes tablas exploratorias se consultan en el notebook.
+- Los ZIP de `datos/originales/` contienen el CSV y el diccionario de cada año.
+- `datos/procesados/egresos_2023_2025_base_comun.parquet` reúne los tres años para el equipo.
+- `resultados/egresos_<año>/tablas/` guarda el diccionario, la calidad de datos, las transformaciones, los diagnósticos pendientes y el resumen de procesamiento de cada año.
+- `resultados/egresos_<año>/figuras/` guarda los tres gráficos descriptivos. `resultados/tablas/` y `resultados/figuras/` contienen los resultados de la versión anterior de 2025.
 
 Lectura de la base compartida:
 
 ```python
 import pandas as pd
-base = pd.read_parquet("datos/procesados/egresos_2025_base_comun.parquet")
+base = pd.read_parquet("datos/procesados/egresos_2023_2025_base_comun.parquet")
 ```
 
 ## Criterios comunes
 
-Se mantienen las 17 variables originales, incluidas `CONDICION_EGRESO` y `DIAS_ESTADA`, y todos los egresos. Se conservan las repeticiones, las estadías extremas y los registros con `ERROR=1`.
+La base común reúne los 16 campos compartidos, `ERROR` y todos los egresos. Las repeticiones se cuentan dentro de cada archivo con los 16 campos compartidos. Se conservan los registros repetidos y las estadías extremas.
 
-Los vacíos y asteriscos se representan como ausentes, con marcas de origen. No se atribuye una causa a los marcadores ni se imputan valores. El literal `NULL` en región se conserva: en este archivo se asocia a la glosa `Extranjero`. Los vacíos de `DIAG2`, causa externa, pueden ser estructurales. Los códigos sin correspondencia en el diccionario no se declaran inválidos ni se eliminan.
+`ERROR` conserva los valores del CSV de 2025. En 2023 y 2024 queda como `null` porque esos archivos no traen el campo. El resumen de 2025 registra el recuento de 0 y 1. La columna queda disponible para revisar la calidad de los datos mientras se aclara su significado.
+
+`ANO_FUENTE` registra el año indicado por el ZIP. Junto con `ID_REGISTRO`, el número de fila dentro de su CSV, permite ubicar cada registro. En `GRUPO_EDAD` se unifican las variantes de «Menor de 1 año» y se registran los cambios por año en `transformaciones.csv`. Las glosas geográficas corregidas se guardan en columnas auxiliares junto con las de origen.
+
+Los vacíos y asteriscos se representan como ausentes, con marcas de origen. No se atribuye una causa a los marcadores ni se imputan valores. Se conserva el texto `NULL` en región porque los tres archivos lo asocian con la glosa `Extranjero`. Los vacíos de `DIAG2`, causa externa, pueden ser estructurales. Los códigos sin correspondencia en el diccionario se conservan para revisión.
 
 El conteo de filas modificadas considera cambios de contenido o representación de faltantes en los campos originales. No incluye la mera adición de atributos ni una conversión de tipo que conserva el mismo valor textual. Los conteos de distintas transformaciones se pueden superponer.
 
@@ -55,11 +55,7 @@ La preparación por algoritmo, selección de entradas y objetivos, partición, c
 
 ## Archivos incluidos y datos de entrada
 
-El repositorio incluye el notebook, las dependencias declaradas, la documentación, las tablas y figuras generadas y el catálogo geográfico pequeño. No incluye `.venv`, archivos temporales, el ZIP original ni la base Parquet generada.
-
-Para recalcular el proyecto después de clonarlo, colocar `EGRESOS_2025.zip` en `datos/originales/`. Debe contener `EGR_DATOS_ABIERTO_2025.csv` y `Diccionario BD egresos hospitalario.xlsx`, los archivos originales utilizados por el equipo. Después, crear el entorno, instalar las dependencias y ejecutar el notebook. El proceso generará la base común en `datos/procesados/`.
-
-Los enlaces a los datos dentro de la documentación corresponden a archivos locales: estarán disponibles una vez colocada la fuente y ejecutado el preprocesamiento.
+El repositorio incluye el notebook, las dependencias, la documentación, el catálogo geográfico y los resultados de la versión anterior. Cada ZIP debe contener `Diccionario BD egresos hospitalario.xlsx` y su CSV. Los nombres son `EGRESOS_2023.csv`, `EGR_DATOS_ABIERTO_2024.csv` y `EGR_DATOS_ABIERTO_2025.csv`.
 
 ## Reglas compartidas del equipo
 

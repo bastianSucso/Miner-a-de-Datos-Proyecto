@@ -1,18 +1,20 @@
 # Diccionario de columnas auxiliares de la base procesada
 
-La base común contiene **1.705.514 egresos y 35 columnas: 17 originales y 18 auxiliares**. Cada fila representa un egreso hospitalario; no necesariamente una persona distinta. Las columnas auxiliares aportan trazabilidad, revisión de calidad y descripciones que facilitan el trabajo de los tres integrantes.
+La base común de 2023 a 2025 contiene **4.985.130 egresos y 36 columnas**. Incluye los 16 campos compartidos por los tres CSV, `ERROR` del CSV de 2025 y 19 columnas auxiliares. Cada fila representa un egreso hospitalario. Las columnas auxiliares registran la procedencia, las revisiones de calidad y las descripciones obtenidas de los catálogos.
 
-Este documento se verificó contra el [notebook de preprocesamiento](../01_preprocesamiento_egresos_2025.ipynb) y la [base común procesada](../datos/procesados/egresos_2025_base_comun.parquet). Las descripciones CIE-10 proceden del diccionario incluido en el [ZIP original](../datos/originales/EGRESOS_2025.zip). La correspondencia territorial está en el [catálogo geográfico](../datos/originales/catalogo_geografico_dpa_2023.csv).
+`ERROR` es un campo entero que admite ausentes. Conserva 1.705.407 ceros y 107 unos en 2025. En 2023 y 2024 queda como `null` porque sus CSV carecen del campo. Su significado está sin documentar. La presencia de un valor distingue a 2025 de los dos años anteriores, por lo que se reserva inicialmente para revisar la calidad de los datos.
+
+El [notebook de preprocesamiento](../01_preprocesamiento_egresos_2025.ipynb) produce la [base común](../datos/procesados/egresos_2023_2025_base_comun.parquet). Las descripciones CIE-10 proceden del mismo diccionario incluido en cada ZIP. La correspondencia territorial está en el [catálogo geográfico](../datos/originales/catalogo_geografico_dpa_2023.csv).
 
 | Categoría | Columnas auxiliares |
 | --- | ---: |
-| Control y calidad de datos | 6 |
+| Procedencia, control y calidad de datos | 7 |
 | Información geográfica | 4 |
 | Información de diagnósticos CIE-10 | 7 |
 | Control de estadías extremas | 1 |
-| **Total** | **18** |
+| **Total** | **19** |
 
-Los ejemplos de las tablas de columnas son **ilustrativos de la regla**, salvo cuando se indica expresamente que fueron observados. No representan historias clínicas individuales. Los conteos identificados como observados se comprobaron en la base actual; pueden superponerse entre columnas.
+Los ejemplos ilustran las reglas de cada columna. Los conteos y ejemplos observados de esta guía corresponden a **2025**. Los informes de cada año están en `resultados/egresos_<año>/tablas/`.
 
 `True` significa verdadero y `False`, falso. Un valor ausente puede mostrarse como `<NA>`: no equivale a cero ni a una cadena de texto. En cambio, `SIN_DATO` es una etiqueta explícita de los campos de estado.
 
@@ -20,27 +22,29 @@ Los ejemplos de las tablas de columnas son **ilustrativos de la regla**, salvo c
 
 | Columna | Qué significa y cómo se construye | Ejemplo ilustrativo e interpretación | Para qué sirve y qué precaución considerar |
 | --- | --- | --- | --- |
-| `ID_REGISTRO` | Número consecutivo asignado al cargar el CSV, desde 1 hasta el total de egresos, respetando su orden. | `1` identifica el primer egreso leído. | Vincular resultados y revisar casos concretos. No identifica pacientes ni hospitales y debe excluirse como predictor o atributo de agrupamiento. |
-| `TIENE_ASTERISCO` | Indica si alguno de los 17 campos originales era exactamente `*`, antes de la limpieza. | `True` indica que el registro tenía al menos un marcador. | Reconocer la falta de información de origen y comparar su distribución. No se confirmó el significado oficial de `*`; no implica un cero ni justifica eliminar la fila. |
-| `TIENE_TEXTO_DANADO` | Busca el carácter de reemplazo `�` en cualquiera de los 17 campos originales. | `True` puede mantenerse aunque una versión derivada ya tenga el nombre reparado. | Auditar la calidad del texto recibido. Describe el origen, no el estado final de las columnas corregidas. |
-| `EN_GRUPO_REPETIDO` | Marca todas las filas cuyos 17 campos originales son idénticos a los de otra fila. Se calcula antes de limpiar, con `duplicated(keep=False)`. | Si dos filas coinciden en todo, ambas reciben `True`, incluida la primera. | Examinar repeticiones sin eliminarlas automáticamente. No demuestra duplicados erróneos. Se calculó con los resultados incluidos en los 17 campos; no debe incorporarse automáticamente como predictor. |
+| `ID_REGISTRO` | Número de fila dentro de cada CSV, a partir de 1. | Con `ANO_FUENTE = 2023`, `1` identifica el primer egreso del CSV de 2023. | El par `ANO_FUENTE` e `ID_REGISTRO` permite ubicar la fila original. |
+| `ANO_FUENTE` | Año que indica el nombre del ZIP leído. | Una fila de `EGRESOS_2024.zip` tiene `ANO_FUENTE = 2024`. | Identificar el archivo de procedencia incluso cuando `ANO_EGRESO` esté ausente. |
+| `TIENE_ASTERISCO` | Indica si alguno de los 16 campos comunes era exactamente `*` antes de la limpieza. | `True` indica que el registro tenía al menos un marcador. | Reconocer la falta de información de origen y comparar su distribución. |
+| `TIENE_TEXTO_DANADO` | Busca el carácter de reemplazo `�` en los 16 campos comunes. | `True` puede mantenerse aunque una versión derivada ya tenga el nombre reparado. | Auditar la calidad del texto recibido. |
+| `EN_GRUPO_REPETIDO` | Marca las filas que comparten los 16 campos comunes con otra fila del mismo CSV. Se calcula antes de limpiar, con `duplicated(keep=False)`. | Si dos filas coinciden en los 16 campos, ambas reciben `True`. | Examinar repeticiones conservando todos los egresos. |
 | `DIAG2_VACIO_ORIGEN` | Indica si `DIAG2` era una cadena vacía (`''`) en el CSV, antes de transformar faltantes. | `True` significa que no se registró un código de causa externa en ese campo. | Distinguir vacíos de origen. `DIAG2` es causa externa, no una segunda enfermedad; un vacío puede ser estructural y no demuestra ausencia de comorbilidades. |
 | `TEXTO_DANADO_PENDIENTE` | Busca `�` en las dos columnas geográficas con sufijo `_CORREGIDA`, después del cruce territorial. | `False` significa que esas dos versiones no contienen el carácter de reemplazo. | Comprobar el resultado de la reparación geográfica. No revisa todo el texto de la base ni garantiza que las glosas originales estén reparadas. |
 
-**Observado en la base actual:**
+**Observado en las filas con `ANO_FUENTE = 2025`**
 
 | Columna | Resultado observado |
 | --- | ---: |
 | `ID_REGISTRO` | De 1 a 1.705.514, sin repeticiones |
+| `ANO_FUENTE` | 2025 en las 1.705.514 filas |
 | `TIENE_ASTERISCO` | 118.961 valores `True` |
 | `TIENE_TEXTO_DANADO` | 763.636 valores `True` |
-| `EN_GRUPO_REPETIDO` | 660.577 valores `True` |
+| `EN_GRUPO_REPETIDO` | 660.640 valores `True` |
 | `DIAG2_VACIO_ORIGEN` | 1.540.934 valores `True` |
 | `TEXTO_DANADO_PENDIENTE` | 0 valores `True` |
 
 **Ejemplo ilustrativo de repetición:** dos hospitalizaciones distintas pueden compartir sexo, edad agrupada, residencia, diagnóstico, días de estadía y los demás atributos públicos. La base no permite comprobar si pertenecen a la misma persona. Por eso `EN_GRUPO_REPETIDO=True` no autoriza a borrar ninguna de ellas ni permite agrupar por paciente.
 
-Los **660.577 registros que integran grupos repetidos** no deben confundirse con las **504.220 repeticiones adicionales** que se obtienen al contar después de la primera aparición. Ambas cantidades fueron observadas; ninguna corresponde a filas eliminadas.
+En 2025 hay **660.640 registros que integran grupos repetidos**. Si se cuenta solo después de la primera aparición, hay **504.278 repeticiones adicionales**.
 
 ## 2. Información geográfica
 
@@ -95,7 +99,7 @@ Las categorías especiales corresponden a comuna `99999` y región `99` para `Ig
 | `SIN_COINCIDENCIA` | Hay un código disponible, pero no se obtuvo la correspondencia prevista. | 32 | 0 |
 | `SIN_DATO` | No hay código disponible para realizar el cruce. | 0 | 1.540.934 |
 
-No debe confundirse `SIN_DATO`, una etiqueta de estado, con el ausente de una descripción. En la base actual hay **283 valores ausentes en `DIAG1_DESCRIPCION`**: 251 corresponden a coincidencia solo de categoría y 32 a falta de correspondencia.
+No debe confundirse `SIN_DATO`, una etiqueta de estado, con el ausente de una descripción. En 2025 hay **283 valores ausentes en `DIAG1_DESCRIPCION`**, de los cuales 251 corresponden a coincidencia solo de categoría y 32 a falta de correspondencia.
 
 Una coincidencia exacta tampoco garantiza que todas las glosas complementarias estén completas. **Ejemplo observado:** `U069` tiene coincidencia exacta y capítulo `U00-U99`, pero la glosa de su categoría está ausente en el diccionario utilizado.
 
@@ -119,13 +123,13 @@ Esta combinación de valores aparece en la base; describe una correspondencia di
 | --- | --- | --- | --- |
 | `ESTADIA_MAYOR_365` | Indica si `DIAS_ESTADA > 365`. La comparación ausente se completa con `False` en la implementación actual. | 365 días produce `False`; 366 días produce `True`. | Localizar casos para revisión y análisis de sensibilidad. El umbral es operativo, no una definición clínica universal. La marca no elimina ni recorta valores. `False` no sustituye revisar si los días son válidos o están ausentes. |
 
-**Observado:** hay 637 valores `True`. Las estadías marcadas van de 366 a 20.368 días y se conservaron. Actualmente `DIAS_ESTADA` no tiene ausentes.
+En 2025 hay 637 valores `True`. Las estadías marcadas van de 366 a 20.368 días.
 
 **No utilizar `ESTADIA_MAYOR_365` como predictor al estimar `DIAS_ESTADA`: se calcula directamente a partir de lo que se quiere estimar y produciría fuga de información.**
 
 ## 5. Uso en las tres líneas de investigación
 
-Las 35 columnas constituyen la base compartida; **no es necesario ni conveniente usarlas todas como entrada de los algoritmos**. Cada línea elegirá y preparará sus atributos en su notebook específico.
+Cada línea elegirá en su notebook los atributos de la base compartida que sirvan para su análisis.
 
 | Línea | Cómo pueden aprovecharse las auxiliares | Qué evitar o revisar |
 | --- | --- | --- |
